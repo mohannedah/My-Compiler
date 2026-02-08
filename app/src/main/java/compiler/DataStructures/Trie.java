@@ -6,6 +6,10 @@ public class Trie<T> {
 
     public Trie(Iterable<SimpleEntry<String, T>> valuesByWord) {
         this.rootNode = new TrieNode<T>('-', null);
+        for(SimpleEntry<String, T> word : valuesByWord) 
+        {
+            this.insert(word);
+        };
     };
 
     public void insert(SimpleEntry<String, T> valueByWord) {
@@ -27,6 +31,7 @@ public class Trie<T> {
         {
             Character currChar = word.charAt(i);
             if(!currNode.hasChild(currChar)) return null;
+            currNode = currNode.getChild(currChar);
         };
 
         if(!currNode.hasChild('*')) return null;

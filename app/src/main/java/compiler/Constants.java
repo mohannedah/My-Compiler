@@ -32,28 +32,31 @@ public class Constants {
         "%",
         "+",
         "-",
-        "==",
-        "<>",
+        "=",
         "<",
         ">",
+        "==",
+        "<>",
         "<=",
         ">=",
         "and",
         "or",
-        "=",
     };
 
     public static final char[] SEPERATORS = new char[] 
     {
         ';',
         ',',
+    };
+
+    public static final char[] BRACKETS = new char[] 
+    {
         '(',
         ')',
         '[',
         ']',
         '{',
         '}',
-        '.',
     };
 
     public static final char[] WHITE_SPACE_CHARACTERS = new char[] 
@@ -62,4 +65,20 @@ public class Constants {
         '\n',
         ' ',
     };
+
+    public static final char[] SPECIAL_CHARACTERS = new char[] 
+    {
+        '*',
+        '/',
+        '%',
+        '+',
+        '-',
+        '=',
+        '<',
+        '>',
+    };
+
+    public static final char OBJECT_ACCESSOR = '.';
+
+    public static final int END_OF_INPUT = 65535;
 }

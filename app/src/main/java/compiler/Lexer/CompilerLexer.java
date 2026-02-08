@@ -21,7 +21,7 @@ public class CompilerLexer {
     private PushbackReader inputReader;
     private Stack<State> states;
 
-    CompilerLexer(PushbackReader input) {
+    public CompilerLexer(PushbackReader input) {
         this.trie = new Trie<TokenFactory>(this.getEntries());
         this.inputReader = input;
         this.states = new Stack<>();
@@ -34,12 +34,12 @@ public class CompilerLexer {
         TokenFactory typeFactory = new TypeFactory(), keywordFactory = new KeywordFactory(), operatorFactory = new OperatorFactory();
         for(int i = 0; i < Constants.KEYWORDS.length; i++) 
         {
-            list.add(new SimpleEntry<>(Constants.KEYWORDS[i], typeFactory));
+            list.add(new SimpleEntry<>(Constants.KEYWORDS[i], keywordFactory));
         };
 
         for(int i = 0; i < Constants.TYPES.length; i++) 
         {
-            list.add(new SimpleEntry<>(Constants.TYPES[i], keywordFactory));
+            list.add(new SimpleEntry<>(Constants.TYPES[i], typeFactory));
         };
 
         for(int i = 0; i < Constants.OPERATORS.length; i++) 
@@ -52,6 +52,11 @@ public class CompilerLexer {
     private boolean isNewLine(char currChar) 
     {
         return currChar == '\n';
+    }
+
+    private boolean isObjectAccessor(char currChar) 
+    {
+        return currChar == '.';
     }
 
     private State getPrevState() 
@@ -89,7 +94,7 @@ public class CompilerLexer {
     {
         char currChar = (char)this.inputReader.read();
 
-        if(currChar == -1) throw new NoSuchElementException("End of the stream");
+        if((int)currChar == Constants.END_OF_INPUT) throw new NoSuchElementException("End of the stream");
         
         registerNewState(currChar);
 
@@ -146,16 +151,43 @@ public class CompilerLexer {
         return isDigit(currChar) || isLowerCase(currChar) || isUpperCase(currChar) || currChar == '_';
     };
 
+    private boolean isSpecialCharacter(char currChar) 
+    {
+        for(int i = 0; i < Constants.SPECIAL_CHARACTERS.length; i++) 
+        {
+            if(Constants.SPECIAL_CHARACTERS[i] == currChar) return true;
+        };
+        return false;
+    };
+
     // TODO: adapt this method to throw an exception.
     private Token scanNumber(String currNumber) throws IOException, Exception
     {
         char currChar = this.getNextChar();
-        while(!this.isWhiteSpaceChar(currChar)) 
+        while(!(this.isSperator(currChar) || this.isWhiteSpaceChar(currChar))) 
         {
-            if(!isDigit(currChar) || currChar == '.') throw new Exception("Invalid number");
+            if(!isDigit(currChar) || currChar != '.') throw new Exception("Invalid number");
             currNumber += currChar;
         };
+        this.reset(currChar);
         return new NumberToken(currNumber);
+    };
+
+    private Token scanSpecialOperator(String currString) throws IOException, Exception 
+    {   
+        try {
+            char currChar = this.getNextChar();
+            while(isSpecialCharacter(currChar)) 
+            {
+                currString += currChar;
+                currChar = this.getNextChar();
+            };
+            this.reset(currChar);
+        } catch (NoSuchElementException e) {
+            // Tolerate this exception in the method. We assume here another read from the reader will throw this exception anyways.
+        } 
+        // At this point we know that `currString` holds an Operator and we know that `this.trie` contains the operator. 
+        return this.trie.getWord(currString).create(currString);
     };
 
     private Token tryScanIdentifier(String currIdentifier) throws IOException
@@ -203,29 +235,31 @@ public class CompilerLexer {
         return new StringToken(currString);
     };
 
-    public Token nextToken() 
+    public Token nextToken() throws IOException, Exception
     {
-        try { 
-            skipWhiteSpaces();
+        skipWhiteSpaces();
 
-            char currChar = getNextChar();
-            Token currToken = null;
-            String currString = String.format("%d", currChar);
-            State tokenState = this.getPrevState();
-            if(isDigit(currChar)) {
-                currToken = this.scanNumber(currString);
-            } else if (isValidIdentifierChar(currChar)) {
-                currToken = this.tryScanIdentifier(currString);
-            } else if (isSperator(currChar)) {
-                currToken = new Seperator(currString);
-            } else if (isQuoteCharacter(currChar)) {
-                currToken = this.scanString(currString);
-            };
-            currToken.state = tokenState;
-            return currToken;
-        } catch (Exception e) {
-            System.out.println("An error has occured while reading: " + e.getMessage());  
-        } 
-        return null;
+        char currChar = getNextChar();
+        Token currToken = null;
+
+        String currString = String.format("%c", currChar);
+        State tokenState = this.getPrevState();
+
+        if(isDigit(currChar)) {
+            currToken = this.scanNumber(currString);
+        } else if (isValidIdentifierChar(currChar)) {
+            currToken = this.tryScanIdentifier(currString);
+        } else if (isSperator(currChar)) {
+            currToken = new Seperator(currString);
+        } else if (isQuoteCharacter(currChar)) {
+            currToken = this.scanString(currString);
+        } else if (isSpecialCharacter(currChar)) {
+            currToken = this.scanSpecialOperator(currString);
+        } else if(isObjectAccessor(currChar)) {
+            currToken = new ObjectAccessor(".");
+        };
+
+        currToken.state = tokenState;
+        return currToken;
     };
 }

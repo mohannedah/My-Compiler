@@ -1,6 +1,6 @@
 package compiler.Lexer.TokenFactories;
-import compiler.Lexer.Keyword;
 import compiler.Lexer.CompilerLexer.*;
+import compiler.Lexer.Tokens.Keyword;
 
 public class KeywordFactory implements TokenFactory {
     @Override

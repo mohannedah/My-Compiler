@@ -15,4 +15,11 @@ public class Token {
     {
         return this.token;
     };
+
+    @Override
+    public String toString() 
+    {
+        return "Token[" + this.getClass().getSimpleName() + " | '" 
+        + this.token + "' @ " + this.state.lineNumber + ":" + this.state.colNumber + "]";
+    };
 }

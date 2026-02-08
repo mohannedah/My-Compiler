@@ -35,7 +35,7 @@ public class TrieNode<T> {
         this.children[charIndex] = node;
     };
 
-    public boolean tryAttach(Character child, Object Value) 
+    public boolean tryAttach(Character child, T value) 
     {
         if(hasChild(child)) return false;
 
