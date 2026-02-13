@@ -11,7 +11,7 @@ public class Constants {
         "else",
         "elseif",
         "record",
-        "proc",
+        "def",
         "return",
         "delete"
     };

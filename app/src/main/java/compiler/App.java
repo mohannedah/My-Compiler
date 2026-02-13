@@ -50,7 +50,7 @@ public class App {
     }
 
     public static void main(String[] args) throws IOException, Exception {
-        StringReader sourceCode = new StringReader("var i int = 3 > 4;");
+        StringReader sourceCode = new StringReader("var i bool = 3 >= 4;");
 
         PushbackReader reader = new PushbackReader(sourceCode, 1);
 

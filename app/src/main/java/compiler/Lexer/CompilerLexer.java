@@ -61,7 +61,7 @@ public class CompilerLexer {
 
     private State getPrevState() 
     {
-        assert !states.isEmpty(); // States cannot be empty as it will always contain a dummy `State` in the beginning , we will only pop elements we pushed in the reset method.
+        assert !states.isEmpty(); // States cannot be empty as it will always contain a dummy `State` in the beginning, we will only pop elements we pushed in the reset method.
         return states.getLast();
     };
 
@@ -186,9 +186,26 @@ public class CompilerLexer {
         } catch (NoSuchElementException e) {
             // Tolerate this exception in the method. We assume here another read from the reader will throw this exception anyways.
         } 
-        // At this point we know that `currString` holds an Operator and we know that `this.trie` contains the operator. 
+        // At this point we know that `currString` holds an Operator and we know that `this.trie` contains the operator.
+        if(!this.trie.containsWord(currString)) return null;
+
         return this.trie.getWord(currString).create(currString);
     };
+
+    private Token scanComments(String currString) throws IOException, Exception 
+    {
+        try {
+            char currChar = this.getNextChar();
+            while(!this.isWhiteSpaceChar(currChar)) 
+            {
+                currString += currChar;
+                currChar = this.getNextChar();
+            };
+        } catch (NoSuchElementException e) {
+            // TODO: handle exception
+        }
+        return new Comment(currString);
+    }
 
     private Token tryScanIdentifier(String currIdentifier) throws IOException
     {
@@ -257,8 +274,10 @@ public class CompilerLexer {
             currToken = this.scanSpecialOperator(currString);
         } else if(isObjectAccessor(currChar)) {
             currToken = new ObjectAccessor(".");
+        } else if(currChar == '#') 
+        {
+            currToken = this.scanComments(currString);
         };
-
         currToken.state = tokenState;
         return currToken;
     };

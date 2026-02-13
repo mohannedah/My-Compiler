@@ -38,4 +38,9 @@ public class Trie<T> {
 
         return currNode.getChild('*').value;
     };
+
+    public boolean containsWord(String word) 
+    {
+        return getWord(word) != null;
+    };
 }
