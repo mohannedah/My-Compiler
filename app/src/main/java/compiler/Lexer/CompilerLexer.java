@@ -1,6 +1,7 @@
 package compiler.Lexer;
 
 import java.util.AbstractMap.SimpleEntry;
+import java.io.EOFException;
 import java.io.IOException;
 import java.io.PushbackReader;
 import java.util.LinkedList;
@@ -9,6 +10,8 @@ import java.util.Stack;
 
 import compiler.Constants;
 import compiler.DataStructures.Trie;
+import compiler.DataStructures.Trie.NoTransitionException;
+import compiler.DataStructures.Trie.TrieNavigator;
 import compiler.Lexer.TokenFactories.KeywordFactory;
 import compiler.Lexer.TokenFactories.OperatorFactory;
 import compiler.Lexer.TokenFactories.TokenFactory;
@@ -109,6 +112,15 @@ public class CompilerLexer {
         return false;
     };
 
+    private boolean isBracketChar(char currChar) 
+    {
+        for(int i = 0; i < Constants.BRACKETS.length; i++) 
+        {
+            if(currChar == Constants.BRACKETS[i]) return true;
+        };
+        return false;
+    };
+
     private void skipWhiteSpaces() throws IOException, NoSuchElementException
     {
         char currChar = this.getNextChar();
@@ -164,45 +176,73 @@ public class CompilerLexer {
     private Token scanNumber(String currNumber) throws IOException, Exception
     {
         char currChar = this.getNextChar();
-        while(!(this.isSperator(currChar) || this.isWhiteSpaceChar(currChar))) 
+        boolean encounteredDot = false;
+        while(this.isDigit(currChar) || currChar == '.') 
         {
-            if(!isDigit(currChar) || currChar != '.') throw new Exception("Invalid number");
+            if(currChar == '.' && encounteredDot) throw new Exception("Invalid number");
             currNumber += currChar;
+            encounteredDot = currChar == '.';
+            currChar = this.getNextChar();
         };
+        if(isLowerCase(currChar) || this.isUpperCase(currChar)) throw new Exception("Invalid number");
         this.reset(currChar);
         return new NumberToken(currNumber);
     };
 
     private Token scanSpecialOperator(String currString) throws IOException, Exception 
     {   
+        Trie<TokenFactory>.TrieNavigator navigator = trie.getNavigator();
+        TokenFactory longestSoFar = null;
+        Stack<Character> readChars = new Stack<>(); // It will be helpful here for popping elements from the end.
         try {
+            readChars.push(currString.charAt(0));
+            navigator.nextChar(currString.charAt(0));
+            longestSoFar = navigator.getLongestMatchedSoFar();
+            int lengthMatched = navigator.getLongestMatchedSoFarLength();
             char currChar = this.getNextChar();
-            while(isSpecialCharacter(currChar)) 
+            try {
+                while(isSpecialCharacter(currChar)) 
+                {
+                    readChars.push(currChar);
+                    navigator.nextChar(currChar);
+                    longestSoFar = navigator.getLongestMatchedSoFar();
+                    lengthMatched = navigator.getLongestMatchedSoFarLength();
+                    currChar = this.getNextChar();
+                };    
+            } catch (NoTransitionException e) {
+                // At this point we know, that there is no path in the `trie` object that will lead us to an operator having the prefix we read so far.
+            }
+            int lengthRemainder = readChars.size() - lengthMatched;
+            while(lengthRemainder > 0) 
             {
-                currString += currChar;
-                currChar = this.getNextChar();
+                char toBeResetChar = readChars.pop();
+                this.reset(toBeResetChar);
+                lengthRemainder--;
             };
-            this.reset(currChar);
         } catch (NoSuchElementException e) {
             // Tolerate this exception in the method. We assume here another read from the reader will throw this exception anyways.
         } 
+        if(longestSoFar == null) throw new InvalidToken();
+        currString = "";
+        for(Character currChar : readChars) 
+        {
+            currString += currChar;
+        };
         // At this point we know that `currString` holds an Operator and we know that `this.trie` contains the operator.
-        if(!this.trie.containsWord(currString)) return null;
-
-        return this.trie.getWord(currString).create(currString);
+        return longestSoFar.create(currString);
     };
 
     private Token scanComments(String currString) throws IOException, Exception 
     {
         try {
             char currChar = this.getNextChar();
-            while(!this.isWhiteSpaceChar(currChar)) 
+            while(!this.isNewLine(currChar)) 
             {
                 currString += currChar;
                 currChar = this.getNextChar();
             };
         } catch (NoSuchElementException e) {
-            // TODO: handle exception
+            // TODO: handle exception (here we assume that we haven't faced a new line character, we are left with the choice either not to tolerate or to tolerate)
         }
         return new Comment(currString);
     }
@@ -277,6 +317,9 @@ public class CompilerLexer {
         } else if(currChar == '#') 
         {
             currToken = this.scanComments(currString);
+        } else if(isBracketChar(currChar)) 
+        {
+            currToken = new Brackets(currString);
         };
         currToken.state = tokenState;
         return currToken;
