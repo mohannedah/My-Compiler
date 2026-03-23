@@ -1,9 +1,9 @@
 package compiler.Lexer;
 
 import java.util.AbstractMap.SimpleEntry;
-import java.io.EOFException;
 import java.io.IOException;
 import java.io.PushbackReader;
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.NoSuchElementException;
 import java.util.Stack;
@@ -11,24 +11,24 @@ import java.util.Stack;
 import compiler.Constants;
 import compiler.DataStructures.Trie;
 import compiler.DataStructures.Trie.NoTransitionException;
-import compiler.DataStructures.Trie.TrieNavigator;
 import compiler.Lexer.TokenFactories.KeywordFactory;
 import compiler.Lexer.TokenFactories.OperatorFactory;
 import compiler.Lexer.TokenFactories.TokenFactory;
 import compiler.Lexer.TokenFactories.TypeFactory;
 import compiler.Lexer.Tokens.*;
 
-
 public class CompilerLexer {
     public Trie<TokenFactory> trie;
     private PushbackReader inputReader;
     private Stack<State> states;
+    private ArrayList<Token> readTokens;
 
     public CompilerLexer(PushbackReader input) {
         this.trie = new Trie<TokenFactory>(this.getEntries());
         this.inputReader = input;
         this.states = new Stack<>();
         this.states.push(new State(0, 0));
+        this.readTokens = new ArrayList<Token>();
     };
 
     private LinkedList<SimpleEntry<String, TokenFactory>> getEntries() 
@@ -85,13 +85,22 @@ public class CompilerLexer {
         return;
     }
 
-    private void reset(char currChar) throws IOException
+    public void reset(char currChar) throws IOException
     {
         this.inputReader.unread(currChar);
         assert !this.states.isEmpty(); // The assumption here that the stack is not empty in this case.
         this.states.pop();
         return;
     }
+
+    public void resetToken(Token token) throws IOException 
+    {
+        for(int i = token.token.length() - 1; i >= 0; i--) 
+        {
+            char currChar = token.token.charAt(i);
+            this.reset(currChar);
+        };
+    };
 
     private char getNextChar() throws IOException, NoSuchElementException
     {
@@ -175,17 +184,21 @@ public class CompilerLexer {
     // TODO: adapt this method to throw an exception.
     private Token scanNumber(String currNumber) throws IOException, Exception
     {
-        char currChar = this.getNextChar();
-        boolean encounteredDot = false;
-        while(this.isDigit(currChar) || currChar == '.') 
-        {
-            if(currChar == '.' && encounteredDot) throw new Exception("Invalid number");
-            currNumber += currChar;
-            encounteredDot = currChar == '.';
-            currChar = this.getNextChar();
-        };
-        if(isLowerCase(currChar) || this.isUpperCase(currChar)) throw new Exception("Invalid number");
-        this.reset(currChar);
+        try {
+            char currChar = this.getNextChar();
+            boolean encounteredDot = false;
+            while(this.isDigit(currChar) || currChar == '.') 
+            {
+                if(currChar == '.' && encounteredDot) throw new Exception("Invalid number");
+                currNumber += currChar;
+                encounteredDot = currChar == '.';
+                currChar = this.getNextChar();
+            };
+            if(isLowerCase(currChar) || this.isUpperCase(currChar)) throw new Exception("Invalid number");
+            this.reset(currChar);   
+        } catch (NoSuchElementException e) {
+            // TODO: handle exception
+        }
         return new NumberToken(currNumber);
     };
 
@@ -208,7 +221,8 @@ public class CompilerLexer {
                     longestSoFar = navigator.getLongestMatchedSoFar();
                     lengthMatched = navigator.getLongestMatchedSoFarLength();
                     currChar = this.getNextChar();
-                };    
+                };
+                readChars.push(currChar);    
             } catch (NoTransitionException e) {
                 // At this point we know, that there is no path in the `trie` object that will lead us to an operator having the prefix we read so far.
             }
@@ -222,7 +236,7 @@ public class CompilerLexer {
         } catch (NoSuchElementException e) {
             // Tolerate this exception in the method. We assume here another read from the reader will throw this exception anyways.
         } 
-        if(longestSoFar == null) throw new InvalidToken();
+        // if(longestSoFar == null) throw new InvalidToken();
         currString = "";
         for(Character currChar : readChars) 
         {
@@ -292,6 +306,16 @@ public class CompilerLexer {
         return new StringToken(currString);
     };
 
+    public Token getAtPosition(int position) throws Exception 
+    {
+        position = Math.max(position, 0);
+        while(readTokens.size() <= position) 
+        {
+            nextToken();
+        };
+        return readTokens.get(position);
+    };
+
     public Token nextToken() throws IOException, Exception
     {
         skipWhiteSpaces();
@@ -321,7 +345,10 @@ public class CompilerLexer {
         {
             currToken = new Brackets(currString);
         };
-        currToken.state = tokenState;
+        if(currToken != null) {
+            currToken.state = tokenState;
+            this.readTokens.addLast(currToken);
+        }
         return currToken;
     };
 }

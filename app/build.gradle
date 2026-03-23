@@ -16,25 +16,31 @@ repositories {
 }
 
 dependencies {
-    // Use JUnit Jupiter for testing.
-    testImplementation libs.junit.jupiter
-
-    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+    // Use JUnit test framework.
+    testImplementation("junit:junit:4.13.2")
+    implementation("junit:junit:4.13.2")
 
     // This dependency is used by the application.
-    implementation libs.guava
+    implementation("com.google.guava:guava:31.1-jre")
+
+    // testImplementation libs.junit.jupiter
+
+    // testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+
+    // // This dependency is used by the application.
+    // implementation libs.guava
 }
 
 // Apply a specific Java toolchain to ease working on different environments.
-java {
-    toolchain {
-        languageVersion = JavaLanguageVersion.of(21)
-    }
-}
+// java {
+//     toolchain {
+//         languageVersion = JavaLanguageVersion.of(21)
+//     }
+// }
 
 application {
     // Define the main class for the application.
-    mainClass = 'project.App'
+    mainClass = 'compiler.App'
 }
 
 tasks.named('test') {

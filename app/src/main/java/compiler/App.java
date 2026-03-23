@@ -25,52 +25,71 @@ package compiler;
   <Object> ::= "{" <ObjectItems> "}"
 */
 
+import java.io.FileReader;
 import java.io.IOException;
 import java.io.PushbackReader;
-import java.io.StringReader;
-import java.util.LinkedList;
-import java.util.NoSuchElementException;
 
 import compiler.Lexer.CompilerLexer;
-import compiler.Lexer.Tokens.Token;
-
+import compiler.Parser.ASTNode;
+import compiler.Parser.Position;
+import compiler.Parser.Parsers.ProgramParser;
 public class App {
-    private static final String EXAMPLE_INPUT = "{\n" +
-        "    \"version\": 17,\n" +
-        "    \"bundles\": [\n" +
-        "        { \"name\" : \"org.graalvm.component.installer.Bundle\" },\n" +
-        "        { \"name\" : \"org.graalvm.component.installer.commands.Bundle\" },\n" +
-        "        { \"name\" : \"org.graalvm.component.installer.remote.Bundle\" },\n" +
-        "        { \"name\" : \"org.graalvm.component.installer.os.Bundle\" }\n" +
-        "    ]\n" +
-        "}";
-
     public String getGreeting() {
         return "Hello Mohanned!";
     }
 
     public static void main(String[] args) throws IOException, Exception {
-        StringReader sourceCode = new StringReader("def Point copyPoints(Point[] p) { \r\n" + //
-                        "    return Point(p[0].x+p[1].x, p[0].y+p[1].y); \r\n" + //
-                        "}");
-
-        PushbackReader reader = new PushbackReader(sourceCode, 1);
-
-        CompilerLexer lexer = new CompilerLexer(reader);
-
-        LinkedList<Token> tokens = new LinkedList<>();
+        String filePath = args[1];
+        FileReader fileReader = null;
         try {
-            Token currToken = lexer.nextToken();
-            while(true) {
-                tokens.addLast(currToken);
-                currToken = lexer.nextToken();
+            fileReader = new FileReader(filePath); 
+            CompilerLexer lexer = new CompilerLexer(new PushbackReader(fileReader));
+            ProgramParser programParser = new ProgramParser(lexer, new Position()); 
+            ASTNode programNode = programParser.parse();
+            System.out.println(programNode);  
+        } catch (Exception e) {
+            throw e;
+        } finally {
+            if(fileReader != null) {
+                fileReader.close();
             }
-        } catch (NoSuchElementException e) {
-            // TODO: handle exception
         }
-
-        System.out.println(tokens);
     }
 }
 
 
+/* 
+"
+(EXTENDED BNF form) ->
+    <BLOCK_SCOPE> ::= '{' <EXPRESSIONS // will figure this out later!
+    Expressions Definition ->     
+        <METHOD_INVOCATION_EXPRESSION> ::= <IDENTIFIER>'('<METHOD_INVOCATION_PARAMS>')'
+        <METHOD_INVOCATION_PARAMS> ::= <EXPRESSION> | <EXPRESSION> ',' <METHOD_INVOCATION_PARAMS> | <EPSILON>
+        <NUMERIC_TERM> ::= <METHOD_INVOCATION_EXPRESSION> | <IDENTIFIER> | <NUMBER>
+        <ARITHMETIC_EXPRESSION> ::= <NUMERIC_TERM> <ARITHMATIC_OPERATOR> <ARITHMETIC_EXPRESSION> | <ARITHMETIC_EXPRESSION> <ARITHMATIC_OPERATOR> <ARITHMETIC_EXPRESSION> | <ARITHMETIC_EXPRESSION> | '(' <ARITHMETIC_EXPRESSION> ')' 
+        <BOOLEAN_EXPRESSION> ::= <EXPRESSION> <BOOLEAN_OPERATOR> <EXPRESSION> | <EXPRESSION>
+        <RANGE_EXPRESSION> ::= <ARITHMETIC_EXPRESSION> <RANGE_OPERATOR>
+        <INDEXING_EXPRESSION> ::= <IDENTIFIER> '[' <ARITHMETIC_EXPRESSION> ']'
+        <IDENTIFIER_FIELD_ACCESSOR_EXPRESSION> ::= <EXPRESSION> '.' <IDENTIFIER_FIELD_ACCESSOR_EXPRESSION> | <IDENTIFIER>
+        <FIELD_ACCESSOR_EXPRESSION> ::= (<IDENTIFIER> | <METHOD_INVOCATION_EXPRESSION>) '.' <IDENTIFIER_FIELD_ACCESSOR_EXPRESSION>
+        <EXPRESSION> ::= <BOOLEAN_EXPRESSION> | <ARITHMETIC_EXPRESSION> | <METHOD_INVOCATION_EXPRESSION> | <FIELD_ACCESSOR_EXPRESSION> | <IDENTIFIER> | <STRING> | <NUMBER> | <BOOL> | '(' <EXPRESSION> ')'
+            
+    Statements Definition -> 
+        <VARIABLE_ASSIGNMENT_STATEMENT> ::= <VARIABLE_DECLARATION> '=' <EXPRESSION>
+        <VARIABLE_DECLARATION> ::= <TYPE> <IDENTIFIER>
+        <CONST_ASSIGNMENT_STATEMENT> ::= final <VARIABLE_ASSIGNMENT_EXPRESSION>
+
+    Struct Definition ->
+        <STRUCT_DEFINITION> ::= coll <IDENTIFIER> '{' <STRUCT_PROPERTIES> '}'
+        <STRUCT_PROPERTY> ::= <TYPE> <IDENTIFIER> ';'
+        <STRUCT_PROPERTIES> ::= <STRUCT_PROPERTY> <STRUCT_PROPERTIES> | <EPSILON>
+
+    <BLOCK_SCOPE> ::= '{' <STATEMENT_LIST> '}'
+
+    Methods Definition ->
+        <METHOD_PARAMS> ::= <METHOD_PARAM> ',' <METHOD_PARAMS> | <METHOD_PARAM>
+        <METHOD_DEFINITION> ::= def <IDENTIFIER> '(' <METHOD_PARAMS> ')' <BLOCK_SCOPE>
+
+    Loops ->
+        <WHILE_LOOP> ::= 'while' '(' <EXPRESSION> ')'
+*/

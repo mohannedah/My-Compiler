@@ -11,6 +11,12 @@ public class Token {
         this.token = token;
     };
 
+    public Token(String token, State state) 
+    {
+        this.token = token;
+        this.state = state;
+    };
+
     public String getToken() 
     {
         return this.token;
