@@ -1,5 +1,10 @@
 package compiler.Parser.Statements;
 
+import org.objectweb.asm.Label;
+import org.objectweb.asm.MethodVisitor;
+import org.objectweb.asm.Opcodes;
+
+import compiler.DataStructures.EvaluationContext;
 import compiler.DataStructures.SymbolTable;
 import compiler.Lexer.Tokens.Identifier;
 import compiler.Parser.Exceptions.SemanticAnalysisException;
@@ -49,5 +54,63 @@ public class ForLoopStatement extends Statement {
         if (this.body != null) {
             this.body.analyze(loopHeaderScope);
         }
+    }
+
+   @Override
+    public void emit(EvaluationContext context) throws Exception 
+    {
+        /*
+            int i = 0;
+            Limit = 100;
+            START_LABEL:
+            if Limit <= i goto END_LABEL
+            {
+                # STATEMENT_1
+                # STATEMENT_2
+            }
+            i++;
+            goto START_LABEL
+            END_LABEL:
+            POP Limit
+        */
+
+        MethodVisitor mv = context.getMethodVisitor();
+
+        Label loopStartLabel = new Label();
+        Label loopEndLabel = new Label();
+        
+        VariableDeclarationStatement declarationStatement = new VariableDeclarationStatement(
+            new IdentifierType("INT", false), 
+            this.loopIdentifier
+        );
+
+        declarationStatement.emit(context);
+
+        int loopVarIndex = context.getLocalVariableIndex(this.loopIdentifier.token);
+        this.rangeExpression.leftOperand.emit(context);
+        mv.visitVarInsn(Opcodes.ISTORE, loopVarIndex);
+
+        this.rangeExpression.rightOperand.emit(context);
+        
+        mv.visitLabel(loopStartLabel);
+        
+        mv.visitInsn(Opcodes.DUP); 
+
+        mv.visitVarInsn(Opcodes.ILOAD, loopVarIndex);
+        
+        mv.visitJumpInsn(Opcodes.IF_ICMPLE, loopEndLabel);        
+
+        if(this.body != null) {
+            this.body.emit(context);
+        }
+
+        this.updateExpression.emit(context);
+        mv.visitVarInsn(Opcodes.ISTORE, loopVarIndex);
+
+        mv.visitJumpInsn(Opcodes.GOTO, loopStartLabel);
+
+        mv.visitLabel(loopEndLabel);
+        
+        mv.visitInsn(Opcodes.POP); 
     }
 }

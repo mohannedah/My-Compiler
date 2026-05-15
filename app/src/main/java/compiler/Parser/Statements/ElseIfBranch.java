@@ -1,8 +1,9 @@
 package compiler.Parser.Statements;
 
+import compiler.DataStructures.EvaluationContext;
 import compiler.DataStructures.SymbolTable;
-import compiler.Parser.Exceptions.SemanticAnalysisException;
 import compiler.Parser.Expressions.Expression;
+import compiler.Parser.MissingConditionError;
 
 public class ElseIfBranch extends Statement {
     public Expression condition;
@@ -20,7 +21,12 @@ public class ElseIfBranch extends Statement {
         IdentifierType identifierType = this.condition.getResultantType(scope);
         if(!identifierType.value.equals("BOOL")) 
         {
-            throw new SemanticAnalysisException("Expected a Boolean Expression as a conition for the Else-iF Statement");
+            throw new MissingConditionError("Expected a Boolean Expression as a conition for the Else-iF Statement");
         }
     }
+
+    @Override
+    public void emit(EvaluationContext context) throws Exception {
+        this.body.emit(context);
+    };
 }

@@ -25,28 +25,144 @@ package compiler;
   <Object> ::= "{" <ObjectItems> "}"
 */
 
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.PushbackReader;
+import java.util.List;
+import java.util.Map;
 
+import compiler.DataStructures.EvaluationContext;
+import compiler.DataStructures.SymbolTable;
 import compiler.Lexer.CompilerLexer;
-import compiler.Parser.ASTNode;
-import compiler.Parser.Position;
+import compiler.Lexer.Tokens.Identifier;
+import compiler.Parser.Exceptions.ArgumentError;
+import compiler.Parser.Expressions.IdentifierExpression;
 import compiler.Parser.Parsers.ProgramParser;
+import compiler.Parser.Position;
+import compiler.Parser.Statements.IdentifierType;
+import compiler.Parser.Statements.Program;
+
+
+class ArgsData 
+{ 
+    String filePath, outputDirectory, runningMode;
+
+    ArgsData(String filePath, String runningMode, String outputDirectory) 
+    {
+        this.filePath = filePath;
+        this.outputDirectory = outputDirectory;
+        this.runningMode = runningMode;
+    };
+};
+
 public class App {
     public String getGreeting() {
         return "Hello Mohanned!";
     }
 
+    public static SymbolTable initializeSymbolTable() 
+    {
+        SymbolTable table = new SymbolTable(null);
+
+        Map<String, List<IdentifierType>> argsMap = Constants.getBuiltInMethodsArgumentMapping();
+        Map<String, IdentifierType> returnMap = Constants.getReturnTypeMapping();
+
+        for (String methodName : argsMap.keySet()) 
+        {
+            List<IdentifierType> expectedArguments = argsMap.get(methodName);
+            IdentifierType expectedReturnType = returnMap.get(methodName);
+
+            Identifier methodIdentifier = new Identifier(methodName);
+            IdentifierExpression methodIdExpr = new IdentifierExpression(methodIdentifier);
+            table.insert(methodIdExpr, expectedReturnType, false);
+            table.insertMethod(methodIdExpr, expectedArguments);
+        }
+
+        return table;
+    };
+
+
+    public static ArgsData parseArgs(String[] args) throws ArgumentError
+    {
+        String runningMode = null, filePath = null, outputDirectory = null;
+        if(args.length == 0) 
+        {
+            throw new ArgumentError(String.format("Expected a file path to compile the code as an argument."));
+        }
+
+        filePath = args[0];
+
+        int currIdx = 1;
+
+        while(currIdx < args.length) {
+            String argument = args[currIdx];
+
+            if(Utils.checkExists(new String[] {"-lexer", "-parser", "analysis", "-code-generation"}, argument)) {
+                if(runningMode != null) {
+                    throw new ArgumentError(String.format("It seems like you have provided two running modes. %s and %s", argument, runningMode));
+                }
+                runningMode = argument;
+            } else {
+                if(!argument.equals("-o")) 
+                {
+                    throw new ArgumentError(String.format("Invalid argument. Got %s", argument));
+                }
+                currIdx += 1; // increase the pointer to get the outputFile. 
+                if(currIdx >= args.length) 
+                {
+                    throw new ArgumentError("Expected an output directory for the compiled code");
+                }
+                outputDirectory = args[currIdx];
+            }
+            currIdx += 1;
+        }
+
+        if(outputDirectory == null) outputDirectory = "currBuild";
+
+        return new ArgsData(filePath, runningMode, outputDirectory);
+    };
+
     public static void main(String[] args) throws IOException, Exception {
-        String filePath = args[1];
+        ArgsData argsData = App.parseArgs(args);
+
+        // StringReader reader = new StringReader(code);
         FileReader fileReader = null;
+        EvaluationContext context = new EvaluationContext();
         try {
-            fileReader = new FileReader(filePath); 
+            fileReader = new FileReader(argsData.filePath); 
             CompilerLexer lexer = new CompilerLexer(new PushbackReader(fileReader));
-            ProgramParser programParser = new ProgramParser(lexer, new Position()); 
-            ASTNode programNode = programParser.parse();
-            System.out.println(programNode);  
+
+            ProgramParser programParser = new ProgramParser(lexer, new Position());
+
+            Program programNode = programParser.parse();
+
+            SymbolTable table = initializeSymbolTable();
+
+            programNode.analyze(table);
+
+            programNode.emit(context);
+
+
+            String outputDirectory = argsData.outputDirectory;
+
+            File outFile = new File(outputDirectory);
+            File parentFile = outFile.getParentFile();
+            
+            if (!parentFile.exists()) 
+            {
+                parentFile.mkdirs();
+            }
+            
+            for(String className : context.compiledClasses.keySet()) 
+            {
+                outFile = new File(parentFile + "/" + className + ".class");
+                byte[] compiledByteCode = context.compiledClasses.get(className);
+                try(FileOutputStream fos = new FileOutputStream(outFile)) {
+                    fos.write(compiledByteCode);
+                }
+            }
         } catch (Exception e) {
             throw e;
         } finally {

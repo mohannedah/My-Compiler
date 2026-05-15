@@ -1,3 +1,5 @@
+package project;
+
 import java.io.PushbackReader;
 import java.io.StringReader;
 
@@ -59,7 +61,7 @@ public class TestLexer {
         CompilerLexer lexer = createLexer("\"Hello World\" 42 3.14");
         
         var strToken = lexer.nextToken();
-        assertEquals("\"Hello World\"", strToken.token); 
+        assertEquals("Hello World", strToken.token); 
         
         var intToken = lexer.nextToken();
         assertEquals("42", intToken.token);

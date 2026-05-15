@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import compiler.Lexer.CompilerLexer;
-import compiler.Parser.ASTNode;
 import compiler.Parser.Position;
 import compiler.Parser.Statements.Statement;
 
@@ -13,7 +12,6 @@ import compiler.Parser.Statements.Statement;
 */
 
 public class StatementListParser extends Parser {
-    
     public StatementListParser(CompilerLexer lexer, Position position) {
         super(lexer, position);
     }

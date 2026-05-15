@@ -3,6 +3,9 @@ package compiler.Parser;
 import java.util.ArrayList;
 import java.util.List;
 
+import compiler.DataStructures.EvaluationContext;
+import compiler.Parser.Statements.IdentifierType;
+
 public class ASTNode {
     public String nodeType;
     public List<ASTNode> nodeChildren;
@@ -23,6 +26,27 @@ public class ASTNode {
     protected String getName() 
     {
         return this.nodeType;
+    };
+
+    public void emit(EvaluationContext context) throws Exception
+    {
+        // By default, do nothing. Only override this if the node can actually emit code (e.g. expressions and statements)
+        throw new UnsupportedOperationException("emit() not implemented for the base ASTNode. Consider calling it from one of its subclasses." );
+    };
+
+    public String determineByteCodePrefix(IdentifierType identifierType) 
+    {
+        if (identifierType.isArray) return "[" + determineByteCodePrefix(new IdentifierType(identifierType.value, false));
+        
+        switch (identifierType.value.toUpperCase()) 
+        {
+            case "INT": return "I";
+            case "FLOAT": return "F";
+            case "BOOL": return "I";
+            case "STRING": return "Ljava/lang/String;";
+            case "VOID": return "V";
+            default: return "L" + identifierType.value + ";"; 
+        }
     };
 
     private void buildTreeString(StringBuilder buffer, String prefix, String childrenPrefix) {

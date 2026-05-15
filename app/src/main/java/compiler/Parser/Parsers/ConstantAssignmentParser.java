@@ -29,11 +29,11 @@ public class ConstantAssignmentParser extends Parser {
             throw new ParseError("Expected an Assignment Expression in a constant assignment", finalKeyword);
         }
 
-        if(!(statement.identifier instanceof IdentifierExpression)) 
+        if(!(statement.leftOperand instanceof IdentifierExpression)) 
         {
             throw new ParseError("Expected an Identfier as a constant name", finalKeyword);
-        };
+        }
 
-        return new ConstantAssignment(statement.declaration, (IdentifierExpression)statement.identifier, statement.expression);
+        return new ConstantAssignment(statement.declaration, (IdentifierExpression)statement.leftOperand, statement.expression);
     };
 }

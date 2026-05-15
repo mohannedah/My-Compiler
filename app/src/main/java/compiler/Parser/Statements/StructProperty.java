@@ -13,6 +13,11 @@ public class StructProperty extends Statement {
         this.identifier = identifier;
     }
 
+    public String getName() 
+    {
+        return this.nodeType + "(" + identifier.token + ")";     
+    }
+    
     @Override
     public void analyze(SymbolTable scope) throws Exception {
         

@@ -13,9 +13,11 @@ import compiler.Lexer.Tokens.Seperator;
 import compiler.Lexer.Tokens.StringToken;
 import compiler.Lexer.Tokens.Token;
 import compiler.Lexer.Tokens.Type;
-import compiler.Parser.Position;
+import compiler.Parser.Expressions.BooleanExpression;
+import compiler.Parser.Expressions.Expression;
 import compiler.Parser.Expressions.IdentifierExpression;
 import compiler.Parser.Expressions.StringExpression;
+import compiler.Parser.Position;
 import compiler.Parser.Statements.BlockStatement;
 import compiler.Parser.Statements.CommentStatement;
 
@@ -44,12 +46,15 @@ public class Parser {
         return token;
     }
 
-    protected IdentifierExpression parseIdentifier() throws Exception 
+    protected Expression parseIdentifier() throws Exception 
     {
         Token token = this.getCurrToken();
         if(token == null) return null; 
         if(token.getClass().getSimpleName().equals(Identifier.class.getSimpleName())) 
         {
+            if(token.token.equals("true") || token.token.equals("false")) {
+                return new BooleanExpression(this.consumeToken());
+            }
             Identifier identifier = (Identifier)this.consumeToken();
             return new IdentifierExpression(identifier);
         }

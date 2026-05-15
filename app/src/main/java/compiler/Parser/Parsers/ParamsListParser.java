@@ -5,8 +5,8 @@ import java.util.List;
 
 import compiler.Lexer.CompilerLexer;
 import compiler.Lexer.Tokens.Seperator;
-import compiler.Parser.Position;
 import compiler.Parser.Expressions.Expression;
+import compiler.Parser.Position;
 
 /*
     <METHOD_INVOCATION_PARAMS> ::= <EXPRESSION> | <EXPRESSION> ',' <METHOD_INVOCATION_PARAMS> | <EPSILON>
@@ -23,7 +23,7 @@ public class ParamsListParser extends Parser {
         Expression currExpression = expressionParser.parse();
         List<Expression> params = new ArrayList<Expression>();
         while(currExpression != null) {
-            params.addFirst(currExpression);
+            params.addLast(currExpression);
             Seperator comma = this.readSeperator(",");
             if(comma == null) break;
             currExpression = expressionParser.parse(); 

@@ -1,5 +1,6 @@
 package compiler.Parser.Statements;
 
+import compiler.DataStructures.EvaluationContext;
 import compiler.DataStructures.SymbolTable;
 
 public class ElseBranch extends Statement {
@@ -9,8 +10,14 @@ public class ElseBranch extends Statement {
         this.body = statement;
         this.nodeChildren.addLast(statement);
     }
+
     @Override
     public void analyze(SymbolTable scope) throws Exception {
         this.body.analyze(scope);
+    };
+
+    @Override
+    public void emit(EvaluationContext context) throws Exception {
+        this.body.emit(context);
     };
 }

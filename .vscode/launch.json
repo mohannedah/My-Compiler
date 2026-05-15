@@ -16,7 +16,7 @@
         "request": "launch",
         "mainClass": "compiler.App",
         "projectName": "app",
-        "args": ["-parser", "test.txt"] 
+        "args": ["test.lang", "-parser", "-o", "tests/test.class"], 
         }
     ]
 }

@@ -7,12 +7,13 @@ import compiler.Lexer.Tokens.Brackets;
 import compiler.Lexer.Tokens.Keyword;
 import compiler.Lexer.Tokens.NumberToken;
 import compiler.Lexer.Tokens.Token;
-import compiler.Parser.Position;
 import compiler.Parser.Exceptions.ParseError;
 import compiler.Parser.Exceptions.UnmatchingBracketError;
 import compiler.Parser.Expressions.ArrayDeclarationExpression;
 import compiler.Parser.Expressions.Expression;
 import compiler.Parser.Expressions.NumberExpression;
+import compiler.Parser.Position;
+import compiler.Parser.Statements.IdentifierType;
 
 /*
     <TERM> ::= 
@@ -133,14 +134,14 @@ public class TermParser extends ExpressionParser  {
 
         if(keyword == null) {
             return null;
-        };
+        }
 
         Brackets leftParan = this.readBracket("[");
 
         if(leftParan == null) 
         {
             throw new ParseError("Expected a `[` in the ARRAY declaration.", token);
-        };
+        }
 
         ExpressionParser expressionParser = new ExpressionParser(lexer, this.position);
         
@@ -158,6 +159,6 @@ public class TermParser extends ExpressionParser  {
             throw new UnmatchingBracketError("]", this.lexer.getAtPosition(this.position.position - 1));
         };
 
-        return new ArrayDeclarationExpression(expression);
+        return new ArrayDeclarationExpression(expression, new IdentifierType(token.token, false));
     };
 }

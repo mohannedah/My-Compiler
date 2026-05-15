@@ -2,11 +2,11 @@ package compiler.Parser.Parsers;
 
 import compiler.Lexer.CompilerLexer;
 import compiler.Lexer.Tokens.ObjectAccessor;
-import compiler.Parser.Position;
 import compiler.Parser.Exceptions.ParseError;
 import compiler.Parser.Expressions.Expression;
 import compiler.Parser.Expressions.IdentifierExpression;
 import compiler.Parser.Expressions.ObjectAccessorExpression;
+import compiler.Parser.Position;
 
 /*
     <FIELD> ::= <METHOD_INVOCATION_EXPRESSION> | <IDENTIFIER>
@@ -26,8 +26,8 @@ public class ObjectAccessorTailParser extends Parser {
     {
         ObjectAccessor token = this.readAccessor();
         if(token == null) return null;
-        IdentifierExpression identifier = this.parseIdentifier();
-        if(identifier == null) 
+        Expression identifier = this.parseIdentifier();
+        if(identifier == null || !(identifier instanceof IdentifierExpression)) 
         {
             throw new ParseError("Expected an `Identifier` after the Object Accessor.", this.lexer.getAtPosition(this.position.position - 1));
         }

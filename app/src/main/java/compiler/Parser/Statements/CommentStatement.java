@@ -1,5 +1,6 @@
 package compiler.Parser.Statements;
 
+import compiler.DataStructures.EvaluationContext;
 import compiler.DataStructures.SymbolTable;
 import compiler.Lexer.Tokens.Comment;
 
@@ -13,5 +14,11 @@ public class CommentStatement extends Statement {
     @Override
     public void analyze(SymbolTable scope) throws Exception {
         // No checking needs to be done here.
+    };
+
+    @Override 
+    public void emit(EvaluationContext context) throws Exception 
+    {
+        // Do nothing.
     };
 }

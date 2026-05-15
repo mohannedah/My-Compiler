@@ -295,6 +295,7 @@ public class CompilerLexer {
     private Token scanString(String currString) throws Exception, IOException
     {
         try {
+            currString = "";
             char currChar = this.getNextChar();
             while (!isQuoteCharacter(currChar)) {
                 currString += currChar;

@@ -1,6 +1,5 @@
 package compiler.Lexer.Tokens;
 
-import compiler.Constants;
 import compiler.Lexer.State;
 
 public class ArithmeticOperator extends Operator {

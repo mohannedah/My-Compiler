@@ -1,0 +1,7 @@
+INT z = 8;
+z = 9;
+def main() 
+{
+    STRING name = "mohanned";
+    println(name + " " + "AHMED");
+}

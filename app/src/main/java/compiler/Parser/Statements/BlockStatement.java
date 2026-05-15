@@ -2,6 +2,7 @@ package compiler.Parser.Statements;
 
 import java.util.List;
 
+import compiler.DataStructures.EvaluationContext;
 import compiler.DataStructures.SymbolTable; 
 
 public class BlockStatement extends Statement {
@@ -32,4 +33,13 @@ public class BlockStatement extends Statement {
         }
     }
 
+    public void emit(EvaluationContext context) throws Exception 
+    {
+        if (this.statements != null) {
+            for (Statement statement : this.statements) 
+            {
+                statement.emit(context); 
+            }
+        }
+    }
 }

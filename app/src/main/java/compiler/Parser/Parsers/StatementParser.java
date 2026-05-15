@@ -28,7 +28,6 @@ import compiler.Parser.Statements.Statement;
 */
 
 public class StatementParser extends Parser {
-    public MethodDefinitionStatement lastMethodStatement;
     public StatementParser(CompilerLexer lexer, Position position) {
         super(lexer, position);
     }
@@ -56,7 +55,6 @@ public class StatementParser extends Parser {
 
         parsedStatement = this.parseRuleFive();
         if (parsedStatement != null) {
-            this.lastMethodStatement = (MethodDefinitionStatement)parsedStatement;
             return parsedStatement;
         } 
         this.resetPosition(startingIndex);
@@ -157,7 +155,7 @@ public class StatementParser extends Parser {
     public Statement parseRuleNine() throws Exception
     {
         ReturnStatementParser parser = new ReturnStatementParser(lexer, position);
-        Statement statement = parser.parse(this.lastMethodStatement);
+        Statement statement = parser.parse();
         if(statement == null) return null;
         Seperator seperator = this.readSeperator(";");
         if(seperator == null) 

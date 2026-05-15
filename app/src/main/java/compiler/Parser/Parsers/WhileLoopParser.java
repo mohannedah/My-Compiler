@@ -34,14 +34,14 @@ public class WhileLoopParser extends Parser {
         if(expression == null) 
         {
             throw new ParseError("Expected an expression for the while loop", whileKeyword);
-        };
+        }
 
         Brackets rightParan = this.readBracket(")");
 
         if(rightParan == null) 
         {
             throw new UnmatchingBracketError(")", this.lexer.getAtPosition(this.position.position - 1));
-        };
+        }
 
         BlockStatement body = this.parseBlock();
 

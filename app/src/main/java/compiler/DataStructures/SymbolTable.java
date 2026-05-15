@@ -4,8 +4,10 @@ import java.util.Hashtable;
 import java.util.List;
 
 import compiler.Lexer.Tokens.Identifier;
+import compiler.Parser.Exceptions.ScopeError;
 import compiler.Parser.Expressions.IdentifierExpression;
 import compiler.Parser.Statements.IdentifierType;
+import compiler.Parser.Statements.MethodDefinitionStatement;
 import compiler.Parser.Statements.StructProperty;
 import compiler.Parser.Exceptions.SemanticAnalysisException; 
 
@@ -24,6 +26,7 @@ public class SymbolTable {
     public Hashtable<Identifier, IdentifierData> hashTable = new Hashtable<Identifier, IdentifierData>();
     public Hashtable<Identifier, List<IdentifierType>> hashTableForMethodArguments = new Hashtable<Identifier, List<IdentifierType>>();
     public Hashtable<Identifier, List<StructProperty>> hashTableForStructs = new Hashtable<Identifier, List<StructProperty>>();
+    public MethodDefinitionStatement lastMethodDefinition;
     public SymbolTable parentScope;
 
     public SymbolTable(SymbolTable parentScope) 
@@ -90,7 +93,7 @@ public class SymbolTable {
         }
         
         if(this.parentScope == null) {
-            throw new SemanticAnalysisException(String.format("Variable '%s' is not defined in the current scope.", identifierExpression.value));
+            throw new ScopeError(String.format("Variable '%s' is not defined in the current scope.", identifierExpression.value));
         }
         
         return this.parentScope.findKey(identifierExpression);
@@ -103,7 +106,7 @@ public class SymbolTable {
         }
         
         if(this.parentScope == null) {
-            throw new SemanticAnalysisException(String.format("Variable '%s' is not defined in the current scope.", identifierExpression.value));
+            throw new ScopeError(String.format("Variable '%s' is not defined in the current scope.", identifierExpression.value));
         }
         
         return this.parentScope.isConstant(identifierExpression);
@@ -117,7 +120,7 @@ public class SymbolTable {
         }
         
         if(this.parentScope == null) {
-            throw new SemanticAnalysisException(String.format("Method '%s' is not defined.", identifierExpression.value));
+            throw new ScopeError(String.format("Method '%s' is not defined.", identifierExpression.value));
         }
         
         return this.parentScope.getMethodArguments(identifierExpression);
@@ -133,9 +136,18 @@ public class SymbolTable {
         }
         
         if(this.parentScope == null) {
-            throw new SemanticAnalysisException(String.format("Struct type '%s' is not defined.", structType.value));
+            throw new ScopeError(String.format("Struct type '%s' is not defined.", structType.value));
         }
         
         return this.parentScope.getStructProperties(structType);
     }
+
+    public MethodDefinitionStatement getLastMethodDefinition() 
+    {
+        if(this.lastMethodDefinition != null) return lastMethodDefinition;
+
+        if(this.parentScope == null) return null;
+        
+        return this.parentScope.getLastMethodDefinition();
+    };
 }

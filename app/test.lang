@@ -1,0 +1,9 @@
+coll Testing {
+    INT x;
+}
+
+def main() 
+{
+    Testing test = Testing(3);
+    print_INT(test.x);
+}
